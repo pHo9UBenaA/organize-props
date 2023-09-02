@@ -1,26 +1,44 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+  const disposableFile = vscode.commands.registerCommand('organizeProps.organizeFileProps', async (file: vscode.Uri) => {
+    await organizeProps(file);
+  });
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "organize-props" is now active!');
+  const disposableFolder = vscode.commands.registerCommand('organizeProps.organizeFolderProps', async (folder: vscode.Uri) => {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Window,
+        title: "Organizing Props in Folder"
+      },
+      async () => {
+        const files = await getTsxFilesInFolder(folder);
+        return Promise.all(files.map(organizeProps));
+      });
+  });
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('organize-props.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from organize props!');
-	});
-
-	context.subscriptions.push(disposable);
+  context.subscriptions.push(disposableFile, disposableFolder);
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+async function getTsxFilesInFolder(dir: vscode.Uri): Promise<ReadonlyArray<vscode.Uri>> {
+  return vscode.workspace.findFiles(
+    new vscode.RelativePattern(dir.fsPath, '**/*.tsx'),
+    '**/node_modules/**'
+  );
+}
+
+async function organizeProps(file: vscode.Uri) {
+  const document = await vscode.workspace.openTextDocument(file);
+  const content = document.getText();
+  const newContent = content.replace(/(\w+)={\'(.*?)\'}/g, "$1='$2'");
+  
+  if (newContent !== content) {
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(
+      file,
+      new vscode.Range(document.lineAt(0).range.start, document.lineAt(document.lineCount - 1).range.end),
+      newContent
+    );
+    await vscode.workspace.applyEdit(edit);
+  }
+}
