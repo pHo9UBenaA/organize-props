@@ -1,48 +1,65 @@
 {
   "name": "organize-props",
-  "displayName": "organize props",
+  "private": true,
+  "displayName": "Organize Props",
   "description": "",
   "version": "0.0.1",
+  "publisher": "pHo9UBenaA",
   "engines": {
     "vscode": "^1.81.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pHo9UBenaA/organize-props.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pHo9UBenaA/organize-props/issues"
+  },
+  "keywords": [],
   "categories": [
     "Other"
   ],
   "activationEvents": [],
-  "main": "./dist/extension.js",
+  "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "organize-props.helloWorld",
-        "title": "Hello World"
+        "command": "organizeProps.organizeFileProps",
+        "title": "Organize File Props"
+      },
+      {
+        "command": "organizeProps.organizeFolderProps",
+        "title": "Organize Folder Props"
       }
-    ]
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "organizeProps.organizeFileProps",
+          "when": "resourceExtname == .tsx"
+        },
+        {
+          "command": "organizeProps.organizeFolderProps",
+          "when": "explorerResourceIsFolder"
+        }
+      ]
+    }
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "vsce:package": "npx vsce package",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run -S esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run -S esbuild-base -- --sourcemap --watch",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "devDependencies": {
-    "@types/vscode": "^1.81.0",
-    "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
+    "@types/vscode": "^1.81.0",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
+    "esbuild": "^0.19.2",
     "eslint": "^8.47.0",
-    "glob": "^10.3.3",
-    "mocha": "^10.2.0",
-    "typescript": "^5.1.6",
-    "ts-loader": "^9.4.4",
-    "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4",
-    "@vscode/test-electron": "^2.3.4"
+    "typescript": "^5.1.6"
   }
 }
